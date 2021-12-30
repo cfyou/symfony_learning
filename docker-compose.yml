@@ -1,0 +1,41 @@
+version: '3.0'
+
+services:
+  nginx:
+    build:
+      context: ./docker/nginx
+    volumes:
+      - ./:/symfony
+    container_name: ${PROJECT_NAME}-nginx
+    restart: always
+    ports:
+      - "8081:80"
+
+  php:
+    build:
+      context: ./docker/php
+    volumes:
+      - ./:/symfony
+      - ./docker/php/php.ini:/usr/local/etc/php/php.ini
+    environment:
+      COMPOSER_MEMORY_LIMIT: 2G
+      XDEBUG_CONFIG: client_host=${XDEBUG_REMOTE_HOST} client_port=${XDEBUG_STORM_PORT} remote_enable=1
+      PHP_IDE_CONFIG: serverName=${XDEBUG_STORM_SERVER_NAME}
+    container_name: ${PROJECT_NAME}-php-fpm
+    depends_on:
+      - postgres
+
+  postgres:
+    image: postgres:13-alpine
+    container_name: ${PROJECT_NAME}-postgresql
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: "app"
+      POSTGRES_PASSWORD: "app123"
+      POSTGRES_USER: "user_app"
+    volumes:
+      - postgresql:/var/lib/postgresql/data
+
+volumes:
+  postgresql:
